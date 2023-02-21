@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define DEFAULT_PORT 5000
+#define DEFAULT_PORT "5000"
 
 enum Mode {
   DBUG,
@@ -27,13 +27,14 @@ enum Mode {
 
 struct Args {
   enum Mode mode;
-  int port;
+  char port[6];
 };
 
 struct Args ParseCommand(int argc, char *argv[]) {
   struct Args retArg;
+  memset(&retArg, 0, sizeof(struct Args));
   retArg.mode = DBUG;
-  retArg.port = DEFAULT_PORT;
+  strcpy(retArg.port, DEFAULT_PORT);
 
   int optchar = 0;
   int optindex = 0;
@@ -62,12 +63,15 @@ struct Args ParseCommand(int argc, char *argv[]) {
         exit(EXIT_SUCCESS);
         break;
       case 'p':
-        retArg.port = atoi(optarg);
-        if(retArg.port < 1024 || retArg.port > USHRT_MAX) {
-          retArg.port = DEFAULT_PORT;
+        const int p = atoi(optarg);
+        if (p < 1024 || p > __UINT16_MAX__) {
+            // if port is invalid
+            strcpy(retArg.port, DEFAULT_PORT);
         }
-
-        printf("set port for connection %d\n", retArg.port);
+        else {
+          sprintf(retArg.port, "%d", p);
+        }
+        printf("set port for connection %s\n", retArg.port);
         break;
       default:
         printf("Unknown argument, please add -h for help.");

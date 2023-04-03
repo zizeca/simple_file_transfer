@@ -30,7 +30,7 @@ int listener(const char* port, int backlog) {
 
   if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
+    return -1;
   }
 
   // loop through all the results and bind to the first we can
@@ -44,7 +44,7 @@ int listener(const char* port, int backlog) {
     if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
                    sizeof(int)) == -1) {
       perror("setsockopt");
-      exit(1);
+      return -1;
     }
 
     if (bind(sock_fd, p->ai_addr, p->ai_addrlen) == -1) {
@@ -60,12 +60,12 @@ int listener(const char* port, int backlog) {
 
   if (p == NULL) {
     fprintf(stderr, "server: failed to bind\n");
-    exit(1);
+    return -1;
   }
 
   if (listen(sock_fd, backlog) == -1) {
     perror("listen");
-    exit(1);
+    return -1;
   }
   return sock_fd;
 }

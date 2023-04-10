@@ -19,7 +19,7 @@
 #include <errno.h>
 
 #include "command_parse.h"
-#include "listener.h"
+#include "open_port.h"
 
 #define LISTEN_BACKLOG 50
 
@@ -47,13 +47,14 @@ int main(int argc, char *argv[]) {
   struct Args arg;
   arg = ParseCommand(argc, argv);
 
+  // socket
   int sockfd, new_fd;
+  sockfd = open_port(arg.port, 10);
+  
   socklen_t sin_size;
   struct sigaction sa;
   struct sockaddr_storage their_addr;  // connector's address information
 	char s[INET6_ADDRSTRLEN];
-
-  sockfd = listener(arg.port, 10);
 
   sa.sa_handler = sigchld_handler;  // reap all dead processes
   sigemptyset(&sa.sa_mask);

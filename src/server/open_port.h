@@ -16,7 +16,7 @@
 #include <errno.h>
 
 
-int listener(const char* port, int backlog) {
+int open_port(const char* port, int backlog) {
 
   int sock_fd;  // listen on sock_fd
   struct addrinfo hints, *servinfo, *p;

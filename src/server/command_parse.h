@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <string.h>
 
 #define DEFAULT_PORT "5000"
 

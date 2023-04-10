@@ -1,8 +1,6 @@
 
 #define _GNU_SOURCE
 
-
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -23,23 +21,38 @@
 
 #define LISTEN_BACKLOG 50
 
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
+//! global variable
+bool gb_trem = false;
+bool gb_hup = false;
 
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa) {
+  if (sa->sa_family == AF_INET) {
+    return &(((struct sockaddr_in *)sa)->sin_addr);
+  }
+
+  return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-
+// sig handler
 void sigchld_handler(int s) {
-  // waitpid() might overwrite errno, so we save and restore it:
-  int saved_errno = errno;
-  while (waitpid(-1, NULL, WNOHANG) > 0)
-    ;
-  errno = saved_errno;
+  switch (s) {
+    case SIGCHLD:
+      // waitpid() might overwrite errno, so we save and restore it:
+      int saved_errno = errno;
+      while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
+      errno = saved_errno;
+      break;
+    case SIGTERM:
+      gb_trem = true;
+      printf("signal terminate\n");
+      break;
+    case SIGHUP:
+      gb_hup = true;
+      printf("signal hup\n");
+      break;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -47,23 +60,32 @@ int main(int argc, char *argv[]) {
   struct Args arg;
   arg = ParseCommand(argc, argv);
 
+  // init daemon, or raplace fork as in man daemon(7)
+  if(arg.mode != DBUG && daemon(0, 0) == -1) {
+    perror("daemon");
+    exit(1);
+  }
+
   // socket
   int sockfd, new_fd;
   sockfd = open_port(arg.port, 10);
-  
-  socklen_t sin_size;
-  struct sigaction sa;
-  struct sockaddr_storage their_addr;  // connector's address information
-	char s[INET6_ADDRSTRLEN];
 
+  // signal, maybe need change to signal(2)
+  struct sigaction sa;
   sa.sa_handler = sigchld_handler;  // reap all dead processes
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = SA_RESTART;
-  if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+  if (sigaction(SIGCHLD, &sa, NULL) == -1 ||
+      sigaction(SIGTERM, &sa, NULL) == -1 ||
+      sigaction(SIGHUP, &sa, NULL) == -1) {
     perror("sigaction");
     exit(1);
   }
 
+  socklen_t sin_size;
+  struct sockaddr_storage their_addr;  // connector's address information
+  char s[INET6_ADDRSTRLEN];
+  printf("pid %d\n", getppid());
   printf("server: waiting for connections...\n");
 
   while (1) {  // main accept() loop
@@ -73,6 +95,7 @@ int main(int argc, char *argv[]) {
       perror("accept");
       continue;
     }
+
 
     inet_ntop(their_addr.ss_family,
               get_in_addr((struct sockaddr *)&their_addr),

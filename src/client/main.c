@@ -1,12 +1,20 @@
-/*
-** client.c -- a stream socket client demo
-*/
+/**
+ * @file main.c
+ * @author Enver Kulametov (zizu.meridian@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-04-11
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 
 #define _GNU_SOURCE
 
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -15,79 +23,70 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
+
+#include "create_connection.h"
 
 #define PORT "5000"  // the port client will be connecting to
 
-#define MAXDATASIZE 100  // max number of bytes we can get at once
+#define MAXDATASIZE BUFSIZ  // max number of bytes we can get at once
 
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-  if (sa->sa_family == AF_INET) {
-    return &(((struct sockaddr_in *)sa)->sin_addr);
-  }
 
-  return &(((struct sockaddr_in6 *)sa)->sin6_addr);
-}
 
 int main(int argc, char *argv[]) {
-  int sockfd, numbytes;
+  int numbytes, retval;
+  int sockfd;
   char buf[MAXDATASIZE];
-  struct addrinfo hints, *servinfo, *p;
-  int rv;
-  char s[INET6_ADDRSTRLEN];
 
-  if (argc != 2) {
-    fprintf(stderr, "usage: client hostname\n");
+
+  if (argc != 4) {
+    fprintf(stderr, "client <ip> <port> <file>\n");
     exit(1);
   }
 
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
+  const char* server_ip = argv[1];
+  const char* server_port = argv[2];
+  const char* file_path = argv[3]; // aliase
 
-  if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
+  FILE* file = fopen(file_path, "r");
+  if(file == NULL) {
+    printf("Fail to read file%s\n", file_path);
+    exit(EXIT_FAILURE);
   }
 
-  // loop through all the results and connect to the first we can
-  for (p = servinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket(p->ai_family, p->ai_socktype,
-                         p->ai_protocol)) == -1) {
-      perror("client: socket");
-      continue;
-    }
-
-    if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-      perror("client: connect");
-      close(sockfd);
-      continue;
-    }
-
-    break;
-  }
-
-  if (p == NULL) {
-    fprintf(stderr, "client: failed to connect\n");
-    return 2;
-  }
-
-  inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
-            s, sizeof s);
-  printf("client: connecting to %s\n", s);
-
-  freeaddrinfo(servinfo);  // all done with this structure
-
-  if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1) {
-    perror("recv");
+  sockfd = create_connection(server_ip, server_port);
+  if(sockfd == -1) {
+    printf("Fail to create connection ip=%s, port=%s", server_ip, server_port);
     exit(1);
   }
 
-  buf[numbytes] = '\0';
+  const char *file_name = basename(file_path);
+  struct stat file_stat;
+  retval = stat(file_path, &file_stat);
+  if(retval == -1) {
+    perror("stat");
+    exit(1);
+  }
 
-  printf("client: received '%s'\n", buf);
+  // encode
+  sprintf(buf, "%d %s", file_stat.st_size, file_name);
+  numbytes = send(sockfd, buf, strlen(buf), NULL); // send file name
+  if(numbytes == -1) {
+    perror("send");
+  }
+
+  // numbytes = recv(sockfd, buf, MAXDATASIZE, NULL);
+  // if(numbytes == -1) {
+  //   perror("recv");
+  //   exit(1);
+  // }
+  // buf[numbytes] = '\0';
+  // int recv_code;
+
+
 
   close(sockfd);
+  fclose(file);
 
   return 0;
 }

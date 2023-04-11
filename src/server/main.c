@@ -18,6 +18,7 @@
 
 #include "command_parse.h"
 #include "open_port.h"
+#include "client_handler.h"
 
 #define LISTEN_BACKLOG 50
 
@@ -104,8 +105,9 @@ int main(int argc, char *argv[]) {
 
     if (!fork()) {    // this is the child process
       close(sockfd);  // child doesn't need the listener
-      if (send(new_fd, "Hello, world!", 13, 0) == -1)
-        perror("send");
+      // if (send(new_fd, "Hello, world!", 13, 0) == -1)
+      //   perror("send");
+      client_handler(new_fd);
       close(new_fd);
       exit(0);
     }

@@ -40,7 +40,7 @@ struct Args ParseCommand(int argc, char *argv[]) {
   int optchar = 0;
   int optindex = 0;
 
-  const char version[] = "0";
+  const char version[] = "0.0.1";
 
   struct option opts[] = {{"debug", no_argument, 0, 'd'},
                           {"version", no_argument, 0, 'v'},

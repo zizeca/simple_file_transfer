@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/sendfile.h>
 #include <arpa/inet.h>
 
 #include <errno.h>
@@ -56,7 +57,10 @@ int main(int argc, char *argv[]) {
 
   sockfd = create_connection(server_ip, server_port);
   if(sockfd == -1) {
-    printf("Fail to create connection ip=%s, port=%s", server_ip, server_port);
+    printf("Fail to create connection ip=%s, port=%s. Error: %s\n", 
+            server_ip, 
+            server_port, 
+            strerror(errno));
     exit(1);
   }
 
@@ -68,11 +72,32 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  // encode
+  // encode message
   sprintf(buf, "%d %s", file_stat.st_size, file_name);
-  numbytes = send(sockfd, buf, strlen(buf), NULL); // send file name
+  
+  // send file name and file size
+  numbytes = send(sockfd, buf, strlen(buf) + 1, 0); // send file name
   if(numbytes == -1) {
     perror("send");
+    exit(1);
+  }
+
+  numbytes = recv(sockfd, buf, MAXDATASIZE, 0);
+  if(numbytes == -1) {
+    perror("recv after send file name");
+    exit(1);
+  }
+
+  int retcode = 0;
+  char msg[255];
+  printf("response: %.*s\n", numbytes, buf);
+
+  int fd = fileno(file);
+  retval = sendfile(sockfd, fd, NULL, BUFSIZ);
+  if(retval == -1) {
+    perror("sendfile");
+    fclose(file);
+    exit(1);
   }
 
   // numbytes = recv(sockfd, buf, MAXDATASIZE, NULL);

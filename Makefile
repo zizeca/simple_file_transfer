@@ -19,17 +19,17 @@ SERVER_OBJECTS := $(patsubst src/server/%.c, $(SERVER_OUTPUT_OBJ)/%.o, $(SERVER_
 
 all: dirs client server
 
-client: $(CLIENT_OBJECTS)
-	$(CC) $(CCFLAGS)  $(CLIENT_OBJECTS) -o $(CLIENT_TARGET)
+client: $(CLIENT_SOURCES)
+	$(CC) $(CCFLAGS)  $(CLIENT_SOURCES) -o $(CLIENT_TARGET)
 
-server: $(SERVER_OBJECTS)
-	$(CC) $(CCFLAGS) $(SERVER_OBJECTS) -o $(SERVER_TARGET) 
+server: $(SERVER_SOURCES)
+	$(CC) $(CCFLAGS) $(SERVER_SOURCES) -o $(SERVER_TARGET) 
 
-$(CLIENT_OUTPUT_OBJ)/%.o: src/client/%.c
-	$(CC) $(CCFLAGS) -c $< -o $@
+# $(CLIENT_OUTPUT_OBJ)/%.o: src/client/%.c
+# 	$(CC) $(CCFLAGS) -c $< -o $@
 
-$(SERVER_OUTPUT_OBJ)/%.o: src/server/%.c
-	$(CC) $(CCFLAGS) -c $< -o $@
+# $(SERVER_OUTPUT_OBJ)/%.o: src/server/%.c
+# 	$(CC) $(CCFLAGS) -c $< -o $@
 
 
 dirs:

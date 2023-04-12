@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
-void client_handler(int sd) {
+int client_handler(int sd) {
   FILE* file;
-
+  int retval;
   char file_name[255];
   int file_size = 0;
   memset(file_name, 0, 255);
@@ -18,46 +18,56 @@ void client_handler(int sd) {
 
   int size = recv(sd, buf, BUFSIZ, 0);
 
-  if(size == -1) {
+  if (size == -1) {
     perror("recv");
-    return;
+    return -1;
   }
 
-  int ret = sscanf(buf,"%d %s", &file_size, file_name);
-  if(ret == EOF) {
+  int ret = sscanf(buf, "%d %s", &file_size, file_name);
+  if (ret == EOF) {
     send(sd, "Fail parsing data", 18, 0);
     printf("scanf data error");
-    return;
+    return -1;
   }
 
   printf("file name =%s, file size = %d\n", file_name, file_size);
 
-  /*
   file = fopen(file_name, "w");
-  if(file == NULL) {
-    send(sd, "Fail to create file", 20, 0);
-    return;
-  } else {
-    send(sd, "Create new file", 16, 0);
+  if (file == NULL) {
+    sprintf(buf, "Fail to create file %s", file_name);
+    send(sd, buf, strlen(buf) + 1, 0);
+    return -1;
+  }
+  else {
+    sprintf(buf, "Create new file %s", file_name);
+    retval = send(sd, buf, strlen(buf) + 1, 0);
+    if (retval == -1) {
+      perror("response");
+      fclose(file);
+      return -1;
+    }
   }
 
+  while (true) {
+    size = recv(sd, buf, BUFSIZ, 0);
+    if (size == 0) {
+      // printf("not cv");
+      break;
+    }
 
-  while(true) {
-      size = recv(sd, buf, BUFSIZ, 0);
-      if(size == 0) break;
-      if(size == -1) {
-        perror("recv file");
-        fclose(file);
-        // delete file;
-        remove(file_name);
-        return;
-      }
-      fwrite(buf, sizeof(char), BUFSIZ, file);
+    if (size == -1) {
+      perror("recv file");
+      fclose(file);
+      // delete file;
+      remove(file_name);
+      return -1;
+    }
+    // printf("write: %s\n", buf);
+    fwrite(buf, sizeof(char), size, file);
   }
 
   fclose(file);
-  */
+  return 0;
 }
 
-
-#endif // __CLIENT_HANDLER_H__
+#endif  // __CLIENT_HANDLER_H__

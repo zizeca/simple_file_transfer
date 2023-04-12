@@ -61,9 +61,21 @@ int main(int argc, char *argv[]) {
   struct Args arg;
   arg = ParseCommand(argc, argv);
 
+  // simple logging. (maybe use syslog) 
+  FILE* logfile;
+  if(arg.mode == DBUG) {
+    logfile = stdout;
+  } else {
+    logfile = fopen("file_transfer.log", "a");
+  }
+  if(logfile == NULL) {
+    perror("FILE log");
+    exit(1);
+  }
+
   // init daemon, or raplace fork as in man daemon(7)
   if(arg.mode != DBUG && daemon(0, 0) == -1) {
-    perror("daemon");
+    fprintf(logfile, "daemon %s\n", strerror(errno));
     exit(1);
   }
 
@@ -71,7 +83,7 @@ int main(int argc, char *argv[]) {
   int sockfd, new_fd;
   sockfd = open_port(arg.port, 10);
 
-  // signal, maybe need change to signal(2)
+  // signal handler,  can replace on signal(2)
   struct sigaction sa;
   sa.sa_handler = sigchld_handler;  // reap all dead processes
   sigemptyset(&sa.sa_mask);
@@ -79,21 +91,21 @@ int main(int argc, char *argv[]) {
   if (sigaction(SIGCHLD, &sa, NULL) == -1 ||
       sigaction(SIGTERM, &sa, NULL) == -1 ||
       sigaction(SIGHUP, &sa, NULL) == -1) {
-    perror("sigaction");
+    fprintf(logfile, "sigaction %s\n", strerror(errno));
     exit(1);
   }
 
   socklen_t sin_size;
   struct sockaddr_storage their_addr;  // connector's address information
   char s[INET6_ADDRSTRLEN];
-  printf("pid %d\n", getppid());
-  printf("server: waiting for connections...\n");
+  fprintf(logfile, "pid %d\n", getppid());
+  fprintf(logfile, "server start...\n");
 
   while (1) {  // main accept() loop
     sin_size = sizeof their_addr;
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd == -1) {
-      perror("accept");
+      fprintf(logfile, "accept %s\n", strerror(errno));
       continue;
     }
 
@@ -101,7 +113,8 @@ int main(int argc, char *argv[]) {
     inet_ntop(their_addr.ss_family,
               get_in_addr((struct sockaddr *)&their_addr),
               s, sizeof s);
-    printf("server: got connection from %s\n", s);
+    
+    fprintf(logfile, "server: got connection from %s\n", s);
 
     if (!fork()) {    // this is the child process
       close(sockfd);  // child doesn't need the listener
@@ -114,8 +127,7 @@ int main(int argc, char *argv[]) {
     close(new_fd);  // parent doesn't need this
   }
 
-  printf("start server\n");
 
-  printf("end programm\n");
+  fprintf(logfile, "end programm\n");
   return 0;
 }

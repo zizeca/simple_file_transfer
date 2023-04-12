@@ -22,8 +22,8 @@
 #define DEFAULT_PORT "5000"
 
 enum Mode {
-  DBUG,
-  RELEASE
+  CONSOLE_MODE,
+  DAEMON_MODE
 };
 
 struct Args {
@@ -34,7 +34,7 @@ struct Args {
 struct Args ParseCommand(int argc, char *argv[]) {
   struct Args retArg;
   memset(&retArg, 0, sizeof(struct Args));
-  retArg.mode = DBUG;
+  retArg.mode = CONSOLE_MODE;
   strcpy(retArg.port, DEFAULT_PORT);
 
   int optchar = 0;
@@ -55,8 +55,8 @@ struct Args ParseCommand(int argc, char *argv[]) {
         exit(EXIT_SUCCESS);
         break;
       case 'd':
-        printf("Debug mode..\n");
-        retArg.mode = DBUG;
+        printf("Debug mode (console).\n");
+        retArg.mode = CONSOLE_MODE;
         break;
       case 'h':
         printf("Help message ....\n");

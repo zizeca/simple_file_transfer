@@ -25,6 +25,8 @@
 //! global variable
 bool gb_trem = false;
 bool gb_hup = false;
+FILE* logfile;
+
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
@@ -62,11 +64,13 @@ int main(int argc, char *argv[]) {
   arg = ParseCommand(argc, argv);
 
   // simple logging. (maybe use syslog) 
-  FILE* logfile;
-  if(arg.mode == DBUG) {
+  if(arg.mode == CONSOLE_MODE) {
     logfile = stdout;
   } else {
+    // DAEMON_MODE
     logfile = fopen("file_transfer.log", "a");
+    fprintf(logfile, "start log \n");
+    setbuf(logfile, NULL);
   }
   if(logfile == NULL) {
     perror("FILE log");
@@ -74,7 +78,7 @@ int main(int argc, char *argv[]) {
   }
 
   // init daemon, or raplace fork as in man daemon(7)
-  if(arg.mode != DBUG && daemon(0, 0) == -1) {
+  if(arg.mode == DAEMON_MODE && daemon(0, 0) == -1) {
     fprintf(logfile, "daemon %s\n", strerror(errno));
     exit(1);
   }
@@ -98,8 +102,8 @@ int main(int argc, char *argv[]) {
   socklen_t sin_size;
   struct sockaddr_storage their_addr;  // connector's address information
   char s[INET6_ADDRSTRLEN];
-  fprintf(logfile, "pid %d\n", getppid());
-  fprintf(logfile, "server start...\n");
+  fprintf(logfile, "Pid: %d.\n", getpid());
+  fprintf(logfile, "start server...\n");
 
   while (1) {  // main accept() loop
     sin_size = sizeof their_addr;

@@ -32,6 +32,7 @@ int client_handler(int sd) {
 
   printf("file name =%s, file size = %d\n", file_name, file_size);
 
+  // work with file
   file = fopen(file_name, "w");
   if (file == NULL) {
     sprintf(buf, "Fail to create file %s", file_name);
@@ -48,13 +49,14 @@ int client_handler(int sd) {
     }
   }
 
+  // loop for recive file
   while (true) {
     size = recv(sd, buf, BUFSIZ, 0);
     if (size == 0) {
-      // printf("not cv");
       break;
     }
 
+    // error recv
     if (size == -1) {
       perror("recv file");
       fclose(file);
@@ -62,7 +64,7 @@ int client_handler(int sd) {
       remove(file_name);
       return -1;
     }
-    // printf("write: %s\n", buf);
+    
     fwrite(buf, sizeof(char), size, file);
   }
 

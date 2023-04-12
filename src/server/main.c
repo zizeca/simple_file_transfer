@@ -28,7 +28,6 @@ bool gb_trem = false;
 bool gb_hup = false;
 // FILE* logfile;
 
-
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
   if (sa->sa_family == AF_INET) {
@@ -65,23 +64,24 @@ int main(int argc, char *argv[]) {
   arg = ParseCommand(argc, argv);
 
   // simple logging. (maybe use syslog)
-  FILE* logfile;
-  if(arg.mode == CONSOLE_MODE) {
+  FILE *logfile;
+  if (arg.mode == CONSOLE_MODE) {
     logfile = stdout;
-  } else {
+  }
+  else {
     // DAEMON_MODE
     logfile = fopen("file_transfer.log", "a");
   }
-  if(logfile == NULL) {
+  if (logfile == NULL) {
     perror("FILE log");
     exit(1);
   }
 
+  // init logger
   log_init(logfile);
 
   // init daemon, or raplace fork as in man daemon(7)
-  if(arg.mode == DAEMON_MODE && daemon(0, 0) == -1) {
-    // fprintf(logfile, "daemon %s\n", strerror(errno));
+  if (arg.mode == DAEMON_MODE && daemon(0, 0) == -1) {
     log_write("daemon %s", strerror(errno));
     exit(1);
   }
@@ -103,11 +103,10 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  // accept connection
   socklen_t sin_size;
   struct sockaddr_storage their_addr;  // connector's address information
   char s[INET6_ADDRSTRLEN];
-  // fprintf(logfile, "Pid: %d.\n", getpid());
-  // fprintf(logfile, "start server...\n");
   log_write("Pid: %d.", getpid());
   log_write("start server...");
 
@@ -119,26 +118,24 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-
     inet_ntop(their_addr.ss_family,
               get_in_addr((struct sockaddr *)&their_addr),
               s, sizeof s);
-    
-    log_write("connect: %s\n", s);
+
+    log_write("connect: %s", s);
 
     if (!fork()) {    // this is the child process
       close(sockfd);  // child doesn't need the listener
-      // if (send(new_fd, "Hello, world!", 13, 0) == -1)
-      //   perror("send");
+
       client_handler(new_fd);
+
       close(new_fd);
       exit(0);
     }
     close(new_fd);  // parent doesn't need this
   }
 
-
-  // fprintf(logfile, "end programm\n");
+  // close logfile.
   fclose(logfile);
   return 0;
 }

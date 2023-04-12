@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "logger.h"
+
 int client_handler(int sd) {
   FILE* file;
   int retval;
@@ -19,18 +21,18 @@ int client_handler(int sd) {
   int size = recv(sd, buf, BUFSIZ, 0);
 
   if (size == -1) {
-    perror("recv");
+    log_write("recv: %s", strerror(errno));
     return -1;
   }
 
   int ret = sscanf(buf, "%d %s", &file_size, file_name);
   if (ret == EOF) {
     send(sd, "Fail parsing data", 18, 0);
-    printf("scanf data error");
+    log_write("scanf data error");
     return -1;
   }
 
-  printf("file name =%s, file size = %d\n", file_name, file_size);
+  log_write("file name = %s, file size = %d\n", file_name, file_size);
 
   // work with file
   file = fopen(file_name, "w");
@@ -43,7 +45,7 @@ int client_handler(int sd) {
     sprintf(buf, "Create new file %s", file_name);
     retval = send(sd, buf, strlen(buf) + 1, 0);
     if (retval == -1) {
-      perror("response");
+      log_write("response: %s", strerror(errno));
       fclose(file);
       return -1;
     }
@@ -58,7 +60,7 @@ int client_handler(int sd) {
 
     // error recv
     if (size == -1) {
-      perror("recv file");
+      log_write("recv file: %s", strerror(errno));
       fclose(file);
       // delete file;
       remove(file_name);

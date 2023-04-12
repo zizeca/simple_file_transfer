@@ -34,7 +34,7 @@ struct Args {
 struct Args ParseCommand(int argc, char *argv[]) {
   struct Args retArg;
   memset(&retArg, 0, sizeof(struct Args));
-  retArg.mode = CONSOLE_MODE;
+  retArg.mode = DAEMON_MODE;
   strcpy(retArg.port, DEFAULT_PORT);
 
   int optchar = 0;

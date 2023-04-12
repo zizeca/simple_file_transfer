@@ -19,13 +19,14 @@
 #include "command_parse.h"
 #include "open_port.h"
 #include "client_handler.h"
+#include "logger.h"
 
-#define LISTEN_BACKLOG 50
+#define LISTEN_BACKLOG 10
 
 //! global variable
 bool gb_trem = false;
 bool gb_hup = false;
-FILE* logfile;
+// FILE* logfile;
 
 
 // get sockaddr, IPv4 or IPv6:
@@ -63,29 +64,31 @@ int main(int argc, char *argv[]) {
   struct Args arg;
   arg = ParseCommand(argc, argv);
 
-  // simple logging. (maybe use syslog) 
+  // simple logging. (maybe use syslog)
+  FILE* logfile;
   if(arg.mode == CONSOLE_MODE) {
     logfile = stdout;
   } else {
     // DAEMON_MODE
     logfile = fopen("file_transfer.log", "a");
-    fprintf(logfile, "start log \n");
-    setbuf(logfile, NULL);
   }
   if(logfile == NULL) {
     perror("FILE log");
     exit(1);
   }
 
+  log_init(logfile);
+
   // init daemon, or raplace fork as in man daemon(7)
   if(arg.mode == DAEMON_MODE && daemon(0, 0) == -1) {
-    fprintf(logfile, "daemon %s\n", strerror(errno));
+    // fprintf(logfile, "daemon %s\n", strerror(errno));
+    log_write("daemon %s", strerror(errno));
     exit(1);
   }
 
   // socket
   int sockfd, new_fd;
-  sockfd = open_port(arg.port, 10);
+  sockfd = open_port(arg.port, LISTEN_BACKLOG);
 
   // signal handler,  can replace on signal(2)
   struct sigaction sa;
@@ -95,21 +98,24 @@ int main(int argc, char *argv[]) {
   if (sigaction(SIGCHLD, &sa, NULL) == -1 ||
       sigaction(SIGTERM, &sa, NULL) == -1 ||
       sigaction(SIGHUP, &sa, NULL) == -1) {
-    fprintf(logfile, "sigaction %s\n", strerror(errno));
+    // fprintf(logfile, "sigaction %s\n", strerror(errno));
+    log_write("sigaction %s", strerror(errno));
     exit(1);
   }
 
   socklen_t sin_size;
   struct sockaddr_storage their_addr;  // connector's address information
   char s[INET6_ADDRSTRLEN];
-  fprintf(logfile, "Pid: %d.\n", getpid());
-  fprintf(logfile, "start server...\n");
+  // fprintf(logfile, "Pid: %d.\n", getpid());
+  // fprintf(logfile, "start server...\n");
+  log_write("Pid: %d.", getpid());
+  log_write("start server...");
 
   while (1) {  // main accept() loop
     sin_size = sizeof their_addr;
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd == -1) {
-      fprintf(logfile, "accept %s\n", strerror(errno));
+      log_write("accept %s", strerror(errno));
       continue;
     }
 
@@ -118,7 +124,7 @@ int main(int argc, char *argv[]) {
               get_in_addr((struct sockaddr *)&their_addr),
               s, sizeof s);
     
-    fprintf(logfile, "server: got connection from %s\n", s);
+    log_write("connect: %s\n", s);
 
     if (!fork()) {    // this is the child process
       close(sockfd);  // child doesn't need the listener
@@ -132,6 +138,7 @@ int main(int argc, char *argv[]) {
   }
 
 
-  fprintf(logfile, "end programm\n");
+  // fprintf(logfile, "end programm\n");
+  fclose(logfile);
   return 0;
 }

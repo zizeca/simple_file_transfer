@@ -8,6 +8,20 @@
 
 #include "logger.h"
 
+bool child_cancel = false;
+
+void sig_child_handler(int s) {
+  child_cancel = true;
+}
+
+int fake_handler(int sd, bool *cancel) {
+  while(!child_cancel) {
+    sleep(2);
+    log_write("child");
+  }
+  log_write("child cancel");
+}
+
 int client_handler(int sd) {
   FILE* file;
   int retval;
@@ -25,8 +39,8 @@ int client_handler(int sd) {
     return -1;
   }
 
-  int ret = sscanf(buf, "%d %s", &file_size, file_name);
-  if (ret == EOF) {
+  retval = sscanf(buf, "%d %s", &file_size, file_name);
+  if (retval == EOF) {
     send(sd, "Fail parsing data", 18, 0);
     log_write("scanf data error");
     return -1;
@@ -59,7 +73,7 @@ int client_handler(int sd) {
     }
 
     // error recv
-    if (size == -1) {
+    if (size == -1 || child_cancel) {
       log_write("recv file: %s", strerror(errno));
       fclose(file);
       // delete file;

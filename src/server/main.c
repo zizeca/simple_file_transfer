@@ -20,12 +20,15 @@
 #include "open_port.h"
 #include "client_handler.h"
 #include "logger.h"
+#include "child_collector.h"
 
 #define LISTEN_BACKLOG 10
 
 //! global variable
 bool gb_trem = false;
 bool gb_hup = false;
+extern bool child_cancel;
+pid_t parent_pid;
 // FILE* logfile;
 
 // get sockaddr, IPv4 or IPv6:
@@ -38,13 +41,15 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 // sig handler
-void sigchld_handler(int s) {
+void sig_handler(int s) {
   switch (s) {
     case SIGCHLD:
       // waitpid() might overwrite errno, so we save and restore it:
       int saved_errno = errno;
-      while (waitpid(-1, NULL, WNOHANG) > 0)
-        ;
+      pid_t pid;
+      while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+        child_remove(pid);
+      }
       errno = saved_errno;
       break;
     case SIGTERM:
@@ -52,13 +57,17 @@ void sigchld_handler(int s) {
       printf("signal terminate\n");
       break;
     case SIGHUP:
-      gb_hup = true;
+      child_kill(SIGHUP);
       printf("signal hup\n");
       break;
   }
 }
 
+
+
 int main(int argc, char *argv[]) {
+  parent_pid = getpid();
+
   // parse command line
   struct Args arg;
   arg = ParseCommand(argc, argv);
@@ -92,7 +101,7 @@ int main(int argc, char *argv[]) {
 
   // signal handler,  can replace on signal(2)
   struct sigaction sa;
-  sa.sa_handler = sigchld_handler;  // reap all dead processes
+  sa.sa_handler = sig_handler;  // reap all dead processes
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = SA_RESTART;
   if (sigaction(SIGCHLD, &sa, NULL) == -1 ||
@@ -107,7 +116,7 @@ int main(int argc, char *argv[]) {
   socklen_t sin_size;
   struct sockaddr_storage their_addr;  // connector's address information
   char s[INET6_ADDRSTRLEN];
-  log_write("Pid: %d.", getpid());
+  log_write("Pid: %d.", parent_pid);
   log_write("start server...");
 
   while (1) {  // main accept() loop
@@ -124,18 +133,27 @@ int main(int argc, char *argv[]) {
 
     log_write("connect: %s", s);
 
-    if (!fork()) {    // this is the child process
+    pid_t pid = fork();
+    if (pid == 0) {    // this is the child process
       close(sockfd);  // child doesn't need the listener
 
-      client_handler(new_fd);
+      sa.sa_handler = sig_child_handler;
+      sigaction(SIGHUP, &sa, NULL);
+
+      fake_handler(new_fd, &gb_hup);
+      // client_handler(new_fd);
 
       close(new_fd);
       exit(0);
+    } else if(pid > 0) {
+      child_add(pid);
     }
+
     close(new_fd);  // parent doesn't need this
   }
 
   // close logfile.
   fclose(logfile);
+  child_clean();
   return 0;
 }

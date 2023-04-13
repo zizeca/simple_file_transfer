@@ -1,3 +1,14 @@
+/**
+ * @file child_collector.h
+ * @author Enver Kulametov (zizu.meridian@gmail.com)
+ * @brief list of process ids
+ * @version 0.1
+ * @date 2023-04-13
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #ifndef __CHILD_COLLECTOR_H__
 #define __CHILD_COLLECTOR_H__
 

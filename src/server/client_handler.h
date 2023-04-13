@@ -14,8 +14,8 @@ void sig_child_handler(int s) {
   child_cancel = true;
 }
 
-int fake_handler(int sd, bool *cancel) {
-  while(!child_cancel) {
+int fake_handler(int sd, bool* cancel) {
+  while (!child_cancel) {
     sleep(2);
     log_write("child");
   }
@@ -65,6 +65,8 @@ int client_handler(int sd) {
     }
   }
 
+  int byte_left = file_size;
+
   // loop for recive file
   while (true) {
     size = recv(sd, buf, BUFSIZ, 0);
@@ -80,8 +82,16 @@ int client_handler(int sd) {
       remove(file_name);
       return -1;
     }
-    
+
     fwrite(buf, sizeof(char), size, file);
+    byte_left -= size;
+  }
+
+  if (byte_left != 0) {
+    log_write("file download not complited");
+    fclose(file);
+    remove(file_name);
+    return 0;
   }
 
   fclose(file);

@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Enver Kulametov (zizu.meridian@gmail.com)
- * @brief 
+ * @brief simple client for file transfer
  * @version 0.1
  * @date 2023-04-11
  * 
@@ -73,9 +73,8 @@ int main(int argc, char *argv[]) {
   }
 
   // encode message
-  sprintf(buf, "%d %s", file_stat.st_size, file_name);
-  
   // send file name and file size
+  sprintf(buf, "%d %s", file_stat.st_size, file_name);
   numbytes = send(sockfd, buf, strlen(buf) + 1, 0); // send file name
   if(numbytes == -1) {
     perror("send");
@@ -99,15 +98,6 @@ int main(int argc, char *argv[]) {
     fclose(file);
     exit(1);
   }
-
-  // numbytes = recv(sockfd, buf, MAXDATASIZE, NULL);
-  // if(numbytes == -1) {
-  //   perror("recv");
-  //   exit(1);
-  // }
-  // buf[numbytes] = '\0';
-  // int recv_code;
-
 
 
   close(sockfd);

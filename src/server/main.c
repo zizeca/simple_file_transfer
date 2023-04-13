@@ -1,4 +1,13 @@
-
+/**
+ * @file main.c
+ * @author Enver Kulametov (zizu.meridian@gmail.com)
+ * @brief simple server for file transfer
+ * @version 0.1
+ * @date 2023-04-13
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #define _GNU_SOURCE
 
 #include <unistd.h>
@@ -66,7 +75,7 @@ void sig_handler(int s) {
 
 
 int main(int argc, char *argv[]) {
-  parent_pid = getpid();
+  // parent_pid = getpid();
 
   // parse command line
   struct Args arg;
@@ -94,6 +103,8 @@ int main(int argc, char *argv[]) {
     log_write("daemon %s", strerror(errno));
     exit(1);
   }
+
+  parent_pid = getpid();
 
   // socket
   int sockfd, new_fd;
@@ -140,8 +151,8 @@ int main(int argc, char *argv[]) {
       sa.sa_handler = sig_child_handler;
       sigaction(SIGHUP, &sa, NULL);
 
-      fake_handler(new_fd, &gb_hup);
-      // client_handler(new_fd);
+      // fake_handler(new_fd, &gb_hup);
+      client_handler(new_fd);
 
       close(new_fd);
       exit(0);

@@ -1,12 +1,16 @@
 #ifndef __CLIENT_HANDLER_H__
 #define __CLIENT_HANDLER_H__
 
+#include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <string.h>
 
 #include "logger.h"
+
+#define OUTPUT_DIR "output"
 
 bool child_cancel = false;
 
@@ -31,6 +35,15 @@ int client_handler(int sd) {
     return -1;
   }
 
+  // create directory
+  {
+  struct stat st = {0};
+  if (stat(OUTPUT_DIR, &st) == -1) {
+      mkdir(OUTPUT_DIR, 0700);
+  }
+  }
+
+  // get info from server
   retval = sscanf(buf, "%d %s", &file_size, file_name);
   if (retval == EOF) {
     send(sd, "Fail parsing data", 18, 0);
@@ -39,6 +52,12 @@ int client_handler(int sd) {
   }
 
   log_write("file name = %s, file size = %d\n", file_name, file_size);
+
+  // prifix dir (& swap)
+  strcpy(buf, OUTPUT_DIR);
+  strcat(buf, "/");
+  strcat(buf, file_name);
+  strcpy(file_name, buf);
 
   // work with file
   file = fopen(file_name, "w");

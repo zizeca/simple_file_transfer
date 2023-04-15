@@ -127,9 +127,11 @@ int main(int argc, char *argv[]) {
 
   while (1) {  // main accept() loop
     sin_size = sizeof their_addr;
+    // accept
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd < 0) {
       log_write("accept %s", strerror(errno));
+      // interrupt
       if(errno == EINTR) {
         if(gb_trem) {
           child_kill(SIGHUP);
@@ -153,7 +155,7 @@ int main(int argc, char *argv[]) {
       sa.sa_handler = sig_child_handler;
       sigaction(SIGHUP, &sa, NULL);
 
-      // fake_handler(new_fd, &gb_hup);
+      // client process
       client_handler(new_fd);
 
       close(new_fd);

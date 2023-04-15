@@ -44,7 +44,7 @@ int client_handler(int sd) {
   }
 
   // get info from server
-  retval = sscanf(buf, "%d %s", &file_size, file_name);
+  retval = sscanf(buf, "%d%254s", &file_size, file_name);
   if (retval == EOF) {
     send(sd, "Fail parsing data", 18, 0);
     log_write("scanf data error");

@@ -59,15 +59,18 @@ struct Args ParseCommand(int argc, char *argv[]) {
         retArg.mode = CONSOLE_MODE;
         break;
       case 'h':
-        printf("Help message ....\n");
+        printf("usage: server [-v | --version [-h | --help] [-p=<port> | --port=<port>] [-d | --debug]\n\n");
+        printf("%4s\t%-12s %s\n", "-v", "--version", "version of application");
+        printf("%4s\t%-12s %s\n", "-p", "--port", "set the port to open the socket");
+        printf("%4s\t%-12s %s\n", "-d", "--debug", "running the application without a daemon, printing the log in the console");
         // todo for help
         exit(EXIT_SUCCESS);
         break;
       case 'p':
         const int p = atoi(optarg);
         if (p < 1024 || p > __UINT16_MAX__) {
-            // if port is invalid
-            strcpy(retArg.port, DEFAULT_PORT);
+          // if port is invalid
+          strcpy(retArg.port, DEFAULT_PORT);
         }
         else {
           sprintf(retArg.port, "%d", p);
@@ -75,7 +78,7 @@ struct Args ParseCommand(int argc, char *argv[]) {
         printf("set port for connection %s\n", retArg.port);
         break;
       default:
-        printf("Unknown argument, please add -h for help.");
+        printf("Unknown argument, please usage <server -h> for help.");
         exit(EXIT_SUCCESS);
         break;
     }

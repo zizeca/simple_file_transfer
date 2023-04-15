@@ -14,14 +14,6 @@ void sig_child_handler(int s) {
   child_cancel = true;
 }
 
-int fake_handler(int sd, bool* cancel) {
-  while (!child_cancel) {
-    sleep(2);
-    log_write("child");
-  }
-  log_write("child cancel");
-}
-
 int client_handler(int sd) {
   FILE* file;
   int retval;

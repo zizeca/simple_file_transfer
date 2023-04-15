@@ -35,10 +35,7 @@
 
 //! global variable
 bool gb_trem = false;
-bool gb_hup = false;
-extern bool child_cancel;
 pid_t parent_pid;
-// FILE* logfile;
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
@@ -63,11 +60,11 @@ void sig_handler(int s) {
       break;
     case SIGTERM:
       gb_trem = true;
-      printf("signal terminate\n");
+      log_write("SIGTERM");
       break;
     case SIGHUP:
       child_kill(SIGHUP);
-      printf("signal hup\n");
+      log_write("SIGHUP");
       break;
   }
 }
@@ -75,8 +72,6 @@ void sig_handler(int s) {
 
 
 int main(int argc, char *argv[]) {
-  // parent_pid = getpid();
-
   // parse command line
   struct Args arg;
   arg = ParseCommand(argc, argv);
@@ -104,6 +99,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  //
   parent_pid = getpid();
 
   // socket
@@ -114,7 +110,6 @@ int main(int argc, char *argv[]) {
   struct sigaction sa;
   sa.sa_handler = sig_handler;  // reap all dead processes
   sigemptyset(&sa.sa_mask);
-  sa.sa_flags = SA_RESTART;
   if (sigaction(SIGCHLD, &sa, NULL) == -1 ||
       sigaction(SIGTERM, &sa, NULL) == -1 ||
       sigaction(SIGHUP, &sa, NULL) == -1) {
@@ -133,10 +128,17 @@ int main(int argc, char *argv[]) {
   while (1) {  // main accept() loop
     sin_size = sizeof their_addr;
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-    if (new_fd == -1) {
+    if (new_fd < 0) {
       log_write("accept %s", strerror(errno));
-      continue;
-    }
+      if(errno == EINTR) {
+        if(gb_trem) {
+          child_kill(SIGHUP);
+          break;
+        }
+        continue;
+      }
+      exit(1);
+    } 
 
     inet_ntop(their_addr.ss_family,
               get_in_addr((struct sockaddr *)&their_addr),

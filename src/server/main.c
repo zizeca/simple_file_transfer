@@ -74,7 +74,7 @@ void sig_handler(int s) {
 int main(int argc, char *argv[]) {
   // parse command line
   struct Args arg;
-  arg = ParseCommand(argc, argv);
+  arg = command_parse(argc, argv);
 
   // simple logging. (maybe use syslog)
   FILE *logfile;

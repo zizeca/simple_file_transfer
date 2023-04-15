@@ -31,7 +31,7 @@ struct Args {
   char port[6];
 };
 
-struct Args ParseCommand(int argc, char *argv[]) {
+struct Args command_parse(int argc, char *argv[]) {
   struct Args retArg;
   memset(&retArg, 0, sizeof(struct Args));
   retArg.mode = DAEMON_MODE;

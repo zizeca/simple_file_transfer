@@ -63,7 +63,6 @@ struct Args command_parse(int argc, char *argv[]) {
         printf("%4s\t%-12s %s\n", "-v", "--version", "version of application");
         printf("%4s\t%-12s %s\n", "-p", "--port", "set the port to open the socket");
         printf("%4s\t%-12s %s\n", "-d", "--debug", "running the application without a daemon, printing the log in the console");
-        // todo for help
         exit(EXIT_SUCCESS);
         break;
       case 'p':

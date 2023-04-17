@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -g
+CFLAGS = -std=c11 -Wall -g -Wformat
 
 CLIENT_TARGET := build/client
 SERVER_TARGET := build/server
@@ -24,13 +24,6 @@ client: $(CLIENT_SOURCES)
 
 server: $(SERVER_SOURCES)
 	$(CC) $(CCFLAGS) $(SERVER_SOURCES) -o $(SERVER_TARGET) 
-
-# $(CLIENT_OUTPUT_OBJ)/%.o: src/client/%.c
-# 	$(CC) $(CCFLAGS) -c $< -o $@
-
-# $(SERVER_OUTPUT_OBJ)/%.o: src/server/%.c
-# 	$(CC) $(CCFLAGS) -c $< -o $@
-
 
 dirs:
 	mkdir -p $(CLIENT_OUTPUT_OBJ)

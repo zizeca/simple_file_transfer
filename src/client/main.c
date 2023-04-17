@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   printf("response: %.*s\n", numbytes, buf);
 
   int fd = fileno(file);
-  retval = sendfile(sockfd, fd, NULL, BUFSIZ);
+  retval = sendfile(sockfd, fd, NULL, file_stat.st_size);
   if(retval == -1) {
     perror("sendfile");
     fclose(file);

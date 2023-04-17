@@ -103,6 +103,8 @@ int client_handler(int sd) {
     fclose(file);
     remove(file_name);
     return 0;
+  } else {
+    log_write("the file is written to disk (%s)", file_name);
   }
 
   fclose(file);

@@ -130,7 +130,6 @@ int main(int argc, char *argv[]) {
     // accept
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd < 0) {
-      log_write("accept %s", strerror(errno));
       // interrupt
       if(errno == EINTR) {
         if(gb_trem) {
@@ -139,6 +138,7 @@ int main(int argc, char *argv[]) {
         }
         continue;
       }
+      log_write("accept %s", strerror(errno));
       exit(1);
     } 
 
@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
     pid_t pid = fork();
     if (pid == 0) {    // this is the child process
       close(sockfd);  // child doesn't need the listener
+      child_clean();  // child doesn't need the pids collection
 
       sa.sa_handler = sig_child_handler;
       sigaction(SIGHUP, &sa, NULL);

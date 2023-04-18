@@ -63,11 +63,13 @@ int client_handler(int sd) {
   file = fopen(file_name, "w");
   if (file == NULL) {
     sprintf(buf, "Fail to create file %s (%s)", file_name, strerror(errno));
+    log_write("%50s", buf);
     send(sd, buf, strlen(buf) + 1, 0);
     return -1;
   }
   else {
     sprintf(buf, "Create new file %s", file_name);
+    log_write("%50s", buf);
     retval = send(sd, buf, strlen(buf) + 1, 0);
     if (retval == -1) {
       log_write("response: %s", strerror(errno));

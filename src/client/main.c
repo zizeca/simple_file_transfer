@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
   // encode message
   // send file name and file size
-  sprintf(buf, "%d %s", file_stat.st_size, file_name);
+  sprintf(buf, "%ld %s", file_stat.st_size, file_name);
   numbytes = send(sockfd, buf, strlen(buf) + 1, 0); // send file name
   if(numbytes == -1) {
     perror("send");
@@ -87,8 +87,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  int retcode = 0;
-  char msg[255];
   printf("response: %.*s\n", numbytes, buf);
 
   int fd = fileno(file);

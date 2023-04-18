@@ -22,7 +22,7 @@ int client_handler(int sd) {
   FILE* file;
   int retval;
   char file_name[255];
-  int file_size = 0;
+  long int file_size = 0;
   memset(file_name, 0, 255);
 
   char buf[BUFSIZ];
@@ -44,14 +44,14 @@ int client_handler(int sd) {
   }
 
   // get info from server
-  retval = sscanf(buf, "%d%254s", &file_size, file_name);
+  retval = sscanf(buf, "%ld%254s", &file_size, file_name);
   if (retval == EOF) {
     send(sd, "Fail parsing data", 18, 0);
     log_write("scanf data error");
     return -1;
   }
 
-  log_write("file name = %s, file size = %d\n", file_name, file_size);
+  log_write("file name = %s, file size = %ld\n", file_name, file_size);
 
   // prifix dir (& swap)
   strcpy(buf, OUTPUT_DIR);

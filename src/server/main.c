@@ -4,9 +4,9 @@
  * @brief simple server for file transfer
  * @version 0.1
  * @date 2023-04-13
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #define _GNU_SOURCE
 
@@ -49,7 +49,7 @@ void *get_in_addr(struct sockaddr *sa) {
 // sig handler
 void sig_handler(int s) {
   switch (s) {
-    case SIGCHLD:
+    case SIGCHLD: {
       // waitpid() might overwrite errno, so we save and restore it:
       int saved_errno = errno;
       pid_t pid;
@@ -57,7 +57,7 @@ void sig_handler(int s) {
         child_remove(pid);
       }
       errno = saved_errno;
-      break;
+    } break;
     case SIGTERM:
       gb_trem = true;
       log_write("SIGTERM");
@@ -68,8 +68,6 @@ void sig_handler(int s) {
       break;
   }
 }
-
-
 
 int main(int argc, char *argv[]) {
   // parse command line
@@ -131,8 +129,8 @@ int main(int argc, char *argv[]) {
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd < 0) {
       // interrupt
-      if(errno == EINTR) {
-        if(gb_trem) {
+      if (errno == EINTR) {
+        if (gb_trem) {
           child_kill(SIGHUP);
           break;
         }
@@ -140,7 +138,7 @@ int main(int argc, char *argv[]) {
       }
       log_write("accept %s", strerror(errno));
       exit(1);
-    } 
+    }
 
     inet_ntop(their_addr.ss_family,
               get_in_addr((struct sockaddr *)&their_addr),
@@ -149,7 +147,7 @@ int main(int argc, char *argv[]) {
     log_write("connect: %s", s);
 
     pid_t pid = fork();
-    if (pid == 0) {    // this is the child process
+    if (pid == 0) {   // this is the child process
       close(sockfd);  // child doesn't need the listener
       child_clean();  // child doesn't need the pids collection
 
@@ -161,7 +159,8 @@ int main(int argc, char *argv[]) {
 
       close(new_fd);
       exit(0);
-    } else if(pid > 0) {
+    }
+    else if (pid > 0) {
       child_add(pid);
     }
 

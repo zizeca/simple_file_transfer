@@ -65,7 +65,7 @@ struct Args command_parse(int argc, char *argv[]) {
         printf("%4s\t%-12s %s\n", "-d", "--debug", "running the application without a daemon, printing the log in the console");
         exit(EXIT_SUCCESS);
         break;
-      case 'p':
+      case 'p': {
         const int p = atoi(optarg);
         if (p < 1024 || p > __UINT16_MAX__) {
           // if port is invalid
@@ -75,7 +75,7 @@ struct Args command_parse(int argc, char *argv[]) {
           sprintf(retArg.port, "%d", p);
         }
         printf("set port for connection %s\n", retArg.port);
-        break;
+      } break;
       default:
         printf("Unknown argument, please usage <server -h> for help.");
         exit(EXIT_SUCCESS);

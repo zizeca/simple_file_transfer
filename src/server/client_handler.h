@@ -62,7 +62,7 @@ int client_handler(int sd) {
   // work with file
   file = fopen(file_name, "w");
   if (file == NULL) {
-    sprintf(buf, "Fail to create file %s", file_name);
+    sprintf(buf, "Fail to create file %s (%s)", file_name, strerror(errno));
     send(sd, buf, strlen(buf) + 1, 0);
     return -1;
   }
@@ -87,7 +87,8 @@ int client_handler(int sd) {
 
     // error recv
     if (size == -1 || child_cancel) {
-      log_write("recv file: %s", strerror(errno));
+      log_write("Error receiving the file: %s", strerror(errno));
+      log_write("The incomplete \'%s\' file will be deleted.", file_name);
       fclose(file);
       // delete file;
       remove(file_name);
@@ -96,15 +97,16 @@ int client_handler(int sd) {
 
     fwrite(buf, sizeof(char), size, file);
     byte_left -= size;
+    // sleep(1); // uncomment for test bigfile
   }
 
   if (byte_left != 0) {
-    log_write("file download not complited");
+    log_write("File \'%s\' download not complited (%s)", file_name, strerror(errno));
     fclose(file);
     remove(file_name);
     return 0;
   } else {
-    log_write("the file is written to disk (%s)", file_name);
+    log_write("The file \'%s\' is written to disk.", file_name);
   }
 
   fclose(file);

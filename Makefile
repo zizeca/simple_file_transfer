@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -g -Wformat
+CCFLAGS = -std=c11 -Wall -g -Wformat -Wpedantic
 
 CLIENT_TARGET := build/client
 SERVER_TARGET := build/server

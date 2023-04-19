@@ -4,9 +4,9 @@
  * @brief Simple logger
  * @version 0.1
  * @date 2023-04-12
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 
 #ifndef __LOGGER_H__
@@ -31,24 +31,36 @@ void log_init(FILE* file) {
 }
 
 void log_write(const char* format, ...) {
+  // check format is not null
+  if (format == NULL) return;
+
   // timer
-  struct tm * loc_time;
+  struct tm* loc_time;
   time_t timer = time(NULL);
   loc_time = localtime(&timer);
+
+  // time prefix
   fprintf(_log_file, "[%02d:%02d:%02d] ", loc_time->tm_hour, loc_time->tm_min, loc_time->tm_sec);
 
-  // print
+  // check format is not empty
+  const size_t format_len = strlen(format);
+  if (format_len == 0) {
+    fprintf(_log_file, "NULL FORMAT (check log_write format)\n");
+    fflush(_log_file);
+    return;
+  }
+
+  // forward print
   va_list arglist;
   va_start(arglist, format);
   vfprintf(_log_file, format, arglist);
   va_end(arglist);
-  
-  // endl
-  if(!iscntrl(format[strlen(format)-1])) {
+
+  // endl if not exist
+  if (!iscntrl(format[format_len - 1])) {
     fputc('\n', _log_file);
   }
   fflush(_log_file);
 }
-
 
 #endif  // __LOGGER_H__

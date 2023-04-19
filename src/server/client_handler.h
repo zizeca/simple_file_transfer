@@ -37,10 +37,10 @@ int client_handler(int sd) {
 
   // create directory
   {
-  struct stat st = {0};
-  if (stat(OUTPUT_DIR, &st) == -1) {
+    struct stat st = {0};
+    if (stat(OUTPUT_DIR, &st) == -1) {
       mkdir(OUTPUT_DIR, 0700);
-  }
+    }
   }
 
   // get info from server
@@ -51,7 +51,7 @@ int client_handler(int sd) {
     return -1;
   }
 
-  log_write("file name = %s, file size = %ld\n", file_name, file_size);
+  log_write("Incoming file \'%s\' (%ld bytes).", file_name, file_size);
 
   // prifix dir (& swap)
   strcpy(buf, OUTPUT_DIR);
@@ -63,13 +63,13 @@ int client_handler(int sd) {
   file = fopen(file_name, "w");
   if (file == NULL) {
     sprintf(buf, "Fail to create file %s (%s)", file_name, strerror(errno));
-    log_write("%50s", buf);
+    log_write("%-80s", buf);
     send(sd, buf, strlen(buf) + 1, 0);
     return -1;
   }
   else {
     sprintf(buf, "Create new file %s", file_name);
-    log_write("%50s", buf);
+    log_write("%-80s", buf);
     retval = send(sd, buf, strlen(buf) + 1, 0);
     if (retval == -1) {
       log_write("response: %s", strerror(errno));
@@ -107,7 +107,8 @@ int client_handler(int sd) {
     fclose(file);
     remove(file_name);
     return 0;
-  } else {
+  }
+  else {
     log_write("The file \'%s\' is written to disk.", file_name);
   }
 
